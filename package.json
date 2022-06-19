@@ -1,0 +1,46 @@
+{
+    "name": "blofetcha",
+    "version": "1.0.0",
+    "description": "Site blobs fetcher and exception tracing.",
+    "main": "index.js",
+    "scripts": {
+        "start": "node ./index.js -a",
+        "test": "node ./index.js -a -n 2 -B 0 -A 0 | grep sjcl.js >/dev/null || exit 1"
+    },
+    "repository": {
+        "type": "git",
+        "url": "git+https://github.com/meganz/blofetcha.git"
+    },
+    "keywords": [
+        "blob",
+        "exception"
+    ],
+    "browserslist": [
+        "Chrome > 99",
+        "Safari > 14",
+        "Firefox > 99"
+    ],
+    "engines": {
+        "npm": ">=8.0.0",
+        "node": ">=16.15.0"
+    },
+    "author": "Diego Casorran",
+    "license": "MIT",
+    "private": true,
+    "bugs": {
+        "url": "https://github.com/meganz/blofetcha/issues"
+    },
+    "homepage": "https://github.com/meganz/blofetcha#readme",
+    "dependencies": {
+        "puppeteer": "5.3.1"
+    },
+    "devDependencies": {
+        "eslint": "8.17.0",
+        "eslint-plugin-compat": "4.0.2",
+        "eslint-plugin-es": "4.1.0",
+        "eslint-plugin-no-unsanitized": "4.0.1",
+        "eslint-plugin-optimize-regex": "1.2.1",
+        "eslint-plugin-sonarjs": "0.13.0",
+        "eslint-plugin-unicorn": "42.0.0"
+    }
+}
