@@ -82,10 +82,9 @@ To build the docker image execute:
 
 To run the Docker image created above, execute:
 
-    docker run -e DISABLE_CHROME_SANDBOX=true -v /home/usre/code/blofetcha/docker-archive:/archive blofetcha
+    docker run -e DISABLE_CHROME_SANDBOX=true -v /home/user/code/blofetcha/docker-archive:/archive blofetcha
 
 NOTE: The mounted "docker-archive" volume will contain the archived Javascript files
-NOTE2: Currently the files are output as having `root:root` permissions and need to be changed after
 
 ## Usage
 
