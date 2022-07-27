@@ -248,14 +248,12 @@ async function getSiteVersion(page) {
 async function launch(url, selector, device) {
     'use strict';
 
-    var chrome_args = [];
+    const args = [];
     if (config.DISABLE_CHROME_SANDBOX){
-      chrome_args = ['--no-sandbox'];
+      args.push('--no-sandbox');
     }
 
-    const browser = await puppeteer.launch({
-       args: chrome_args,
-    }).catch(console.error);
+    const browser = await puppeteer.launch({args});
     const page = await browser.newPage();
 
     page
