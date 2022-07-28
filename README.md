@@ -74,6 +74,18 @@ This will run the app in archive-only mode and exit, creating gzipped bundles as
 
 Where `1655340486` is the timestamp, and `4.15.10` the site version.
 
+## Docker
+
+To build the docker image execute:
+
+    docker build . -t blofetcha
+
+To run the Docker image created above, execute:
+
+    docker run -e DISABLE_CHROME_SANDBOX=true -v /home/user/code/blofetcha/docker-archive:/archive blofetcha
+
+NOTE: The mounted "docker-archive" volume will contain the archived Javascript files
+
 ## Usage
 
 Enter the following command to get usage information:
