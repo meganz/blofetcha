@@ -1,0 +1,17 @@
+name: docker-runner
+on:
+  push:
+    branches: [ "main" ]
+  pull_request:
+    branches: [ "main" ]
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+
+    steps:
+    - uses: actions/checkout@v3
+    - name: Build Docker image
+      run: docker build . --file Dockerfile --tag blofetcha:v$GITHUB_RUN_NUMBER
+    - name: Run Docker image
+      run: docker run -e DISABLE_CHROME_SANDBOX=true -e DEBUG=true blofetcha:v$GITHUB_RUN_NUMBER
