@@ -1,6 +1,6 @@
 # blofetcha
 
-[![JavaScript Style Guide](https://img.shields.io/badge/code_style-standard-brightgreen.svg)](https://standardjs.com)
+[![JavaScript Style Guide](https://img.shields.io/badge/code_style-standard-brightgreen.svg)](https://standardjs.com) [![docker-runner](https://github.com/meganz/blofetcha/actions/workflows/docker-image.yml/badge.svg)](https://github.com/meganz/blofetcha/actions/workflows/docker-image.yml) [![build-and-test](https://github.com/meganz/blofetcha/actions/workflows/main.yml/badge.svg)](https://github.com/meganz/blofetcha/actions/workflows/main.yml)
 
 This very simple NodeJS application is meant to archive JS bundles served on MEGA domains, which are
 dynamically-generated at runtime when visiting the site, and ultimately to ease tracing reported JS exceptions.
