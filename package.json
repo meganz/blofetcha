@@ -21,8 +21,8 @@
         "Firefox > 99"
     ],
     "engines": {
-        "npm": ">=8.0.0",
-        "node": ">=16.15.0"
+        "npm": ">=6.0.0",
+        "node": ">=12.22.0"
     },
     "author": "Diego Casorran",
     "license": "MIT",
