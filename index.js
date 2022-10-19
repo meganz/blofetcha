@@ -513,7 +513,7 @@ for (let i = 0; i < argv.length; ++i) {
         const file = getArchivedFile(argv.ver, argv.domain, argv.file);
         const input = String(await FS.prompt('Paste stack-trace (^C to quit):').catch(stderr)).split('\n');
 
-        input.map((line) => String(line.split(/\s\(|@/)[1]).split(':')[1])
+        input.map((line) => String(line.split(/\s\(|@/)[1]).replace(/(?:blob:)?https?:/,'').split(':')[1])
             .forEach((ln, idx) => {
                 if (parseInt(ln) > 0) {
                     stdout(`\n: ${input[idx].trim()}`);
