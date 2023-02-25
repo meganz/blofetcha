@@ -148,6 +148,7 @@ const config = {
         'mega.nz': {
             embed: true,
             mobile: true,
+            path: 'register',
             hash: 'no-redirect',
             async preload(page) {
                 'use strict';
@@ -199,23 +200,6 @@ const config = {
 
                 return files;
             }
-        },
-        'mega.io': {
-            parser(blobs) {
-                'use strict';
-
-                if (blobs.length !== 2) {
-                    console.warn(`[!] Unexpected number of blobs (${blobs.length}) for MEGA.io!`);
-                }
-
-                const [, [, content]] = blobs;
-
-                if (content[2] === ' *   js/jquery.protect.js') {
-                    return [['megaio.main.js', content]];
-                }
-
-                stderr(`[!] Unexpected blob for MEGA.io: ${content.slice(0, 9)}`);
-            }
         }
     },
     last: null
@@ -250,7 +234,7 @@ async function launch(url, selector, device) {
 
     const args = [];
     if (config.DISABLE_CHROME_SANDBOX){
-      args.push('--no-sandbox');
+        args.push('--no-sandbox');
     }
 
     const browser = await puppeteer.launch({args});
@@ -320,7 +304,7 @@ async function archive() {
     for (const domain in config.sites) {
         const opt = config.sites[domain];
         const url = `https://${domain}/${opt.path || ''}#${opt.hash || ''}`;
-        const selector = opt.waitSelector || '.startpage.register';
+        const selector = opt.waitSelector || '.bottom-menu';
 
         const {page, close} = await launch(url, selector);
         const {website: version, timestamp, commit} = await getSiteVersion(page);
@@ -357,7 +341,7 @@ async function archive() {
         config.last = folder;
 
         if (opt.mobile) {
-            const {page, close} = await launch(url, selector, config.MOBILE_DEVICE);
+            const {page, close} = await launch(url, '.mobile.fm-header', config.MOBILE_DEVICE);
             await siteHandler(domain, page, target, opt);
             await close();
         }
@@ -422,6 +406,7 @@ OPTIONS:
 -B, --before <n>             Show N lines of leading code (default: 9)
 -A, --after <n>              Show N lines of trailing code (default: 4)
 -t, --dump                   Parse stack-trace dump from stdin.
+-g, --test                   Perform simple test.
 -i, --interactive            Enter interactive mode.
 `;
 const argv = process.argv.slice(2);
@@ -479,6 +464,14 @@ for (let i = 0; i < argv.length; ++i) {
         case 'after':
             argv.ac = parseInt(argv[++i]) | 0;
             break;
+        case 'g':
+        case 'test':
+            argv.g = 1;
+            argv.ln = 2;
+            argv.ac = 0;
+            argv.bc = 0;
+            argv.arc = 1;
+            break;
         default:
             stderr(`Unknown option "${argv[i]}"`);
             stderr(usage);
@@ -488,6 +481,7 @@ for (let i = 0; i < argv.length; ++i) {
 
 (async(argv) => {
     'use strict';
+    const trace = [];
 
     if (!argv.arc) {
         const stat = FS.stat(path.join(config.ARCHIVE_PATH, 'last'));
@@ -497,7 +491,15 @@ for (let i = 0; i < argv.length; ++i) {
     if (argv.arc) {
         await archive();
 
-        if (stderr.count > 0) {
+        if (argv.g) {
+
+            process.stdout.write = (ln) => {
+
+                trace.push(ln);
+            };
+        }
+        else if (stderr.count > 0) {
+
             process.exit(1);
         }
     }
@@ -521,4 +523,11 @@ for (let i = 0; i < argv.length; ++i) {
                 }
             });
     }
+
+    if (argv.g) {
+        stderr(`Testing result... ${trace}`);
+
+        process.exit((trace.length !== 1 || trace[0].replace(/\s+/g, '') !== '\x1b[31m2*sjcl.js\x1b[0m') | 0);
+    }
+
 })(argv);

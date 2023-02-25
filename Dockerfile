@@ -13,7 +13,7 @@ RUN apt install -y \
  libcairo2 \
  libcups2 \
  libdbus-1-3 \
- libdrm2 \ 
+ libdrm2 \
  libevent-2.1-7 \
  libexpat1 \
  libflac8 \
@@ -61,4 +61,4 @@ ADD package.json .
 
 RUN npm install
 
-ENTRYPOINT ["npm", "start"]
+ENTRYPOINT ["npm", "test"]
