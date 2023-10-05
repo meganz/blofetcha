@@ -321,10 +321,12 @@ async function archive() {
         if (!config.last || !FS.mkdir(target)) {
 
             if (exists || !FS.mkdir(target)) {
+                await close();
+
                 if (exists) {
                     console.debug(`[!] Current version already archived.`);
+                    return true;
                 }
-                await close();
                 break;
             }
 
@@ -482,14 +484,24 @@ for (let i = 0; i < argv.length; ++i) {
 (async(argv) => {
     'use strict';
     const trace = [];
+    const man = argv.ln || argv.dump;
 
     if (!argv.arc) {
         const stat = FS.stat(path.join(config.ARCHIVE_PATH, 'last'));
         argv.arc = !stat || Number(stat.mtime) + 864e5 * 7 < Date.now();
+
+        if (argv.arc && man) {
+            const locked = FS.stat(path.join(config.ARCHIVE_PATH, 'locked'));
+
+            if (locked && Number(stat.mtime) + 864e5 < Date.now()) {
+
+                argv.arc = 0;
+            }
+        }
     }
 
     if (argv.arc) {
-        await archive();
+        const cur = await archive();
 
         if (argv.g) {
 
@@ -498,9 +510,15 @@ for (let i = 0; i < argv.length; ++i) {
                 trace.push(ln);
             };
         }
+        else if (cur && man) {
+            FS.write(path.join(config.ARCHIVE_PATH, 'locked'), new Date().toISOString(), false, true);
+        }
         else if (stderr.count > 0) {
 
             process.exit(1);
+        }
+        else {
+            FS.rm(path.join(config.ARCHIVE_PATH, 'locked'));
         }
     }
 
