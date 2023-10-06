@@ -142,7 +142,7 @@ const config = {
     COMPRESS: !process.env.NOCOMPRESS,
     MOBILE_DEVICE: process.env.MOBILE_DEVICE || 'iPhone 8 Plus',
     ARCHIVE_PATH: process.env.ARCHIVE_PATH || path.join(cwd, 'archive'),
-    DISABLE_CHROME_SANDBOX: process.env.DISABLE_CHROME_SANDBOX || false,
+    DISABLE_CHROME_SANDBOX: process.env.DISABLE_CHROME_SANDBOX || process.platform !== 'win32',
 
     sites: {
         'mega.nz': {
@@ -233,7 +233,7 @@ async function launch(url, selector, device) {
     'use strict';
 
     const args = [];
-    if (config.DISABLE_CHROME_SANDBOX){
+    if (config.DISABLE_CHROME_SANDBOX | 0) {
         args.push('--no-sandbox');
     }
 
