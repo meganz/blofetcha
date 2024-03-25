@@ -153,7 +153,10 @@ const config = {
             async preload(page) {
                 'use strict';
                 if (!config.last) {
-                    return page.evaluate(async() => Promise.resolve(M.require('chat')));
+                    return page.evaluate(async() => {
+                        const files = ['chat', 'rewind', 's4'];
+                        return Promise.all(files.map(n => M.require(n)));
+                    });
                 }
             },
             parser(blobs) {
@@ -167,7 +170,7 @@ const config = {
                     type = null;
                     switch (content[1]) {
                         case ' *   sjcl.js':
-                            if (String(content[6]).includes('embedplayer.js')) {
+                            if (String(content[8]).includes('embedplayer.js')) {
                                 type = 'embed';
                             }
                             else if (String(content).includes('the mobile web site')) {
@@ -180,12 +183,22 @@ const config = {
                         case ' * var handler = {':
                             type = 'chat';
                             break;
+                        case '/** @property s4.ui */':
+                            type = 's4';
+                            break;
+                        case `lazy(mega, 'rewind', () => {`:
+                            type = 'rewind';
+                            break;
                         default: {
                             const exclude = /^es6s|css\//.test(content.slice(0, 2))
                                 || String(content).slice(35).startsWith('IllegalStateError');
 
                             if (exclude) {
                                 continue;
+                            }
+
+                            if (content[1].includes('var buildVersion = {')) {
+                                type = 'boot';
                             }
                         }
                     }
@@ -211,7 +224,7 @@ async function getSiteBlobs(page) {
     return page.evaluate(async() => {
         const result = [];
 
-        for (const elm of document.querySelectorAll('script[src^="blob:"]')) {
+        for (const elm of document.querySelectorAll('script[src^="blob:"], script[src*="secureboot"]')) {
             const {src} = elm;
             const response = await fetch(src).catch(console.error);
 
@@ -290,7 +303,7 @@ async function siteHandler(domain, page, target, options) {
     for (let i = files.length; i--;) {
         const [name, content] = files[i];
 
-        if (!FS.write(path.join(target, name), content.join('\n'), config.COMPRESS)) {
+        if (!FS.write(path.join(target, name), content.join('\n'), config.COMPRESS, true)) {
             return null;
         }
     }
@@ -376,6 +389,17 @@ function getArchivedFile(ver = 'last', domain = 'meganz', type = 'main') {
         }
     }
 
+    if (type === '*') {
+        const vp = path.join(config.ARCHIVE_PATH, version);
+        const rv = Object.create(null);
+        const ls = fs.readdirSync(vp);
+
+        for (let i = ls.length; i--;) {
+            rv[ls[i]] = FS.read(path.join(vp, ls[i]));
+        }
+        return rv;
+    }
+
     const data = FS.read(path.join(config.ARCHIVE_PATH, version, `${domain}.${type}.js`));
     if (!data) {
         process.exit(1);
@@ -386,6 +410,14 @@ function getArchivedFile(ver = 'last', domain = 'meganz', type = 'main') {
 function printCodeAt(data, ln, bc = 0, ac = 0) {
     const n = ln - 1;
     const c = Math.max(0, n - bc);
+
+    if (typeof data === 'object') {
+        for (const fn in data) {
+            stdout(`\n: ${fn}`);
+            printCodeAt(data[fn], ln, bc, ac);
+        }
+        return;
+    }
 
     String(data).split('\n')
         .slice(c, 1 + c + bc + ac)
@@ -405,6 +437,7 @@ OPTIONS:
 -f, --file <name>            Locate exception under specific bundle name (default: main)
 -v, --version <tag>          Find code on specific version (default: last archived)
 -n, --line <n>               Print code at specified source line number.
+-s, --scan [p]               Find source line numbers from stdin given a pattern.
 -B, --before <n>             Show N lines of leading code (default: 9)
 -A, --after <n>              Show N lines of trailing code (default: 4)
 -t, --dump                   Parse stack-trace dump from stdin.
@@ -445,10 +478,17 @@ for (let i = 0; i < argv.length; ++i) {
         case 'f':
         case 'file':
             argv.file = word(argv[++i]);
+            if (argv.file === 'a') {
+                argv.file = '*';
+            }
             break;
         case 'n':
         case 'line':
             argv.ln = parseInt(argv[++i]);
+            break;
+        case 's':
+        case 'scan':
+            argv.scan = JSON.parse(argv[i + 1] && argv[i + 1][0] !== '-' ? argv[++i] : '["\\n","\\n@"]');
             break;
         case 'v':
         case 'version':
@@ -529,11 +569,30 @@ for (let i = 0; i < argv.length; ++i) {
     if (argv.ln > 0) {
         printCodeAt(getArchivedFile(argv.ver, argv.domain, argv.file), argv.ln, argv.bc, argv.ac);
     }
+    else if (argv.scan) {
+        const input = await FS.readStream(process.stdin, RegExp(`\x18\\s*$`)).catch(stderr);
+        if (input) {
+            const [pp, sep, ml = 10] = argv.scan;
+            const file = getArchivedFile(argv.ver, argv.domain, argv.file);
+
+            String(input).split(sep).forEach((val, idx, obj) => {
+                if (idx > 0) {
+                    const ln = parseInt(val);
+                    if (ln > ml) {
+                        const pl = obj[idx - 1].split(pp).pop();
+
+                        stdout(`\n\r\n\n${pl}`);
+                        printCodeAt(file, ln, argv.bc, argv.ac);
+                    }
+                }
+            });
+        }
+    }
     else if (argv.dump) {
         const file = getArchivedFile(argv.ver, argv.domain, argv.file);
         const input = String(await FS.prompt('Paste stack-trace (^C to quit):').catch(stderr)).split('\n');
 
-        input.map((line) => String(line.split(/\s\(|@/)[1]).replace(/(?:blob:)?https?:/,'').split(':')[1])
+        input.map((line) => String(line.split(/\s\(|@|\s\.\./)[1]).replace(/(?:blob:)?https?:/, '').split(':')[1])
             .forEach((ln, idx) => {
                 if (parseInt(ln) > 0) {
                     stdout(`\n: ${input[idx].trim()}`);
