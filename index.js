@@ -223,15 +223,20 @@ async function getSiteBlobs(page) {
 
     return page.evaluate(async() => {
         const result = [];
-
-        for (const elm of document.querySelectorAll('script[src^="blob:"], script[src*="secureboot"]')) {
-            const {src} = elm;
-            const response = await fetch(src).catch(console.error);
+        const promises = [];
+        const getb = async(src) => {
+            const response = await fetch(src);
 
             if (response) {
                 result.push([src, String(await response.text()).split('\n')]);
             }
+        };
+
+        for (const elm of document.querySelectorAll('script[src^="blob:"], script[src*="secureboot"]')) {
+            const {src} = elm;
+            promises.push(getb(src).catch((ex) => console.error(`Fetch request failed for ${src}... ${ex}`)));
         }
+        await Promise.all(promises);
 
         return result;
     });
