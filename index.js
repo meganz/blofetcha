@@ -154,7 +154,7 @@ const config = {
                 'use strict';
                 if (!config.last) {
                     return page.evaluate(async() => {
-                        const files = ['chat', 'rewind', 's4'];
+                        const files = ['chat', 'rewind', 's4', 'pwm'];
                         return Promise.all(files.map(n => M.require(n)));
                     });
                 }
@@ -199,6 +199,9 @@ const config = {
 
                             if (content[1].includes('var buildVersion = {')) {
                                 type = 'boot';
+                            }
+                            else if (content[0] === 'class MegaComponent extends MegaDataEmitter {') {
+                                type = 'pwm';
                             }
                         }
                     }
