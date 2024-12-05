@@ -200,7 +200,7 @@ const config = {
                             if (content[1].includes('var buildVersion = {')) {
                                 type = 'boot';
                             }
-                            else if (content[0] === 'class MegaComponent extends MegaDataEmitter {') {
+                            else if (content[0] === 'class MegaComponentGroup {') {
                                 type = 'pwm';
                             }
                         }
