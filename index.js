@@ -200,7 +200,7 @@ const config = {
                             if (content[1].includes('var buildVersion = {')) {
                                 type = 'boot';
                             }
-                            else if (content[0] === 'class MegaComponentGroup {') {
+                            else if (content[1].includes('Represents a read-only field component')) {
                                 type = 'pwm';
                             }
                         }
@@ -231,13 +231,20 @@ async function getSiteBlobs(page) {
             const response = await fetch(src);
 
             if (response) {
-                result.push([src, String(await response.text()).split('\n')]);
+                const text = await response.text();
+
+                if (typeof text === 'string' && text.length) {
+
+                    return result.push([src, text.split('\n')]);
+                }
             }
+
+            throw new Error(`Fetch request failed for ${src}, empty content...`);
         };
 
         for (const elm of document.querySelectorAll('script[src^="blob:"], script[src*="secureboot"]')) {
             const {src} = elm;
-            promises.push(getb(src).catch((ex) => console.error(`Fetch request failed for ${src}... ${ex}`)));
+            promises.push(getb(src));
         }
         await Promise.all(promises);
 
@@ -283,8 +290,11 @@ async function launch(url, selector, device) {
         await page.emulate(puppeteer.devices[device]);
     }
     await page.goto(url);
-    await page.evaluate(async() => {
-        URL.revokeObjectURL = nop;
+    await page.evaluate(() => {
+        Object.defineProperty(URL, 'revokeObjectURL', {
+            value() {
+            }
+        });
     });
 
     if (selector) {
