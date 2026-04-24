@@ -335,7 +335,7 @@ async function archive() {
     for (const domain in config.sites) {
         const opt = config.sites[domain];
         const url = `https://${domain}/${opt.path || ''}#${opt.hash || ''}`;
-        const selector = opt.waitSelector || '.bottom-menu';
+        const selector = opt.waitSelector || '.mega-dialog-container';
 
         const {page, close} = await launch(url, selector);
         const {website: version, timestamp, commit} = await getSiteVersion(page);
